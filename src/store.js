@@ -1,6 +1,16 @@
 import Vue from "vue";
 import VueCompositionAPI from "@vue/composition-api";
-import { collection, query, onSnapshot } from "firebase/firestore";
+import {
+  collection,
+  query,
+  onSnapshot,
+  addDoc,
+  where,
+  getDocs,
+  setDoc,
+  doc,
+  orderBy,
+} from "firebase/firestore";
 import { getFirestore } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
 import { reactive } from "@vue/composition-api";
@@ -12,7 +22,63 @@ export const state = reactive({
   projectDict: {},
   projects: [],
   shifts: [],
+  tasks: [],
+  taskDict: {},
+  selectedPersonOpenTasks: [],
+  db: null,
 });
+
+export const addNewPerson = async (person) => {
+  await addDoc(collection(state.db, "people"), person);
+};
+
+export const addNewProject = async (project) => {
+  await addDoc(collection(state.db, "projects"), project);
+};
+
+export const addNewTask = async (task) => {
+  await addDoc(collection(state.db, "tasks"), task);
+};
+
+export const addNewShift = async (shift) => {
+  await addDoc(collection(state.db, "shifts"), shift);
+};
+
+export const getOpenTasks = async (personReference) => {
+  console.log("getting open tasks", personReference);
+  state.selectedPersonOpenTasks = [];
+  const shiftsRef = collection(state.db, "shifts");
+
+  const q = query(
+    shiftsRef,
+    where("open", "==", true),
+    where("person", "==", personReference)
+  );
+  const querySnapshot = await getDocs(q);
+  querySnapshot.forEach((doc) => {
+    let task = doc.data();
+    task.reference = doc.id;
+    state.selectedPersonOpenTasks.push(task);
+  });
+};
+
+export const updateShift = async (shift) => {
+  await setDoc(doc(state.db, "shifts", shift.reference), shift);
+};
+
+export const updateTask = async (task) => {
+  await setDoc(doc(state.db, "tasks", task.reference), task);
+};
+
+export const updatePerson = async (person) => {
+  console.log("removing person here too", person);
+  await setDoc(doc(state.db, "people", person.reference), person);
+};
+
+export const updateProject = async (project) => {
+  await setDoc(doc(state.db, "project", project.reference), project);
+};
+
 export const initialize = () => {
   console.log("initializing");
   const firebaseConfig = {
@@ -27,9 +93,9 @@ export const initialize = () => {
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);
 
-  const db = getFirestore(app);
+  state.db = getFirestore(app);
 
-  const q = query(collection(db, "people"));
+  const q = query(collection(state.db, "people"), where("active", "==", true));
   onSnapshot(q, (querySnapshot) => {
     state.people = [];
     state.personDict = {};
@@ -41,7 +107,10 @@ export const initialize = () => {
     });
   });
 
-  const a = query(collection(db, "projects"));
+  const a = query(
+    collection(state.db, "projects"),
+    where("active", "==", true)
+  );
   onSnapshot(a, (querySnapshot) => {
     state.projects = [];
     state.projectsDict = {};
@@ -53,11 +122,29 @@ export const initialize = () => {
     });
   });
 
-  const c = query(collection(db, "shifts"));
+  const c = query(
+    collection(state.db, "shifts"),
+
+    // where("hidden", "!=", true),
+    // orderBy("hidden", "desc"),
+    orderBy("start", "desc")
+  );
   onSnapshot(c, (querySnapshot) => {
     state.shifts = [];
     querySnapshot.forEach((doc) => {
       state.shifts.push(doc.data());
+    });
+  });
+
+  const t = query(collection(state.db, "tasks"), where("active", "==", true));
+  onSnapshot(t, (querySnapshot) => {
+    state.tasks = [];
+    state.taskDict = {};
+    querySnapshot.forEach((doc) => {
+      let task = doc.data();
+      task.reference = doc.id;
+      state.taskDict[task.reference] = task;
+      state.tasks.push(task);
     });
   });
 };

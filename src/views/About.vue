@@ -1,61 +1,197 @@
 <template>
-  <v-container fluid class="pt-4">
-    <v-app-bar rounded="lg" color="blue-grey lighten-5" dense flat>
-      <v-app-bar-title>Project Tracking </v-app-bar-title>
-    </v-app-bar>
-    <v-navigation-drawer color="blue-grey lighten-1" permanent app>
-      <v-row class="py-3 px-4" no-gutters justify="center">
-        <v-card
-          flat
-          class="flex"
-          height="200"
-          rounded="lg"
-          color="blue-grey lighten-2"
-        >
-        </v-card>
-      </v-row>
-    </v-navigation-drawer>
+  <v-container class="pt-4">
+    <v-card flat outlined class="mb-4" rounded="lg">
+      <v-row class="pr-3" no-gutters align="center" justify="space-between">
+        <v-card-title
+          ><v-icon class="mr-3">mdi-account</v-icon> Team Members
+        </v-card-title>
+        <v-dialog v-model="newPersonDialog" max-width="400px">
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn depressed color="primary" dark v-bind="attrs" v-on="on">
+              Add
+            </v-btn>
+          </template>
+          <v-card class="py-2">
+            <v-card-title>
+              <span class="text-h5">Person</span>
+            </v-card-title>
 
-    <v-card flat outlined class="mt-4 mb-4" rounded="lg">
-      <v-card-title
-        ><v-icon class="mr-2">mdi-account-hard-hat</v-icon> People
-      </v-card-title>
+            <v-card-text>
+              <v-container>
+                <v-row>
+                  <v-col cols="12" sm="6">
+                    <v-text-field
+                      v-model="newPerson.firstName"
+                      label="First Name"
+                    ></v-text-field>
+                  </v-col>
+                  <v-col cols="12" sm="6">
+                    <v-text-field
+                      v-model="newPerson.lastName"
+                      label="LastName"
+                    ></v-text-field>
+                  </v-col>
+                </v-row>
+              </v-container>
+            </v-card-text>
+
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn
+                color="blue darken-1"
+                text
+                @click="(newPersonDialog = false), resetNewPerson()"
+              >
+                Cancel
+              </v-btn>
+              <v-btn color="blue darken-1" text @click="submitNewPerson()">
+                Save
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+      </v-row>
       <v-data-table :headers="peopleHeaders" :items="jobState.people">
         <template v-slot:item.lastName="{ item }">
           {{ item.firstName }} {{ item.lastName }}
         </template>
+        <template v-slot:item.action="{ item }">
+          <v-row no-gutters justify="center">
+            <v-btn @click="removePerson(item)" icon
+              ><v-icon>mdi-close</v-icon></v-btn
+            >
+          </v-row>
+        </template>
       </v-data-table>
     </v-card>
     <v-card flat outlined class="mb-4" rounded="lg">
-      <v-card-title
-        ><v-icon class="mr-2">mdi-office-building</v-icon> Projects
-      </v-card-title>
+      <v-row class="pr-3" no-gutters align="center">
+        <v-card-title
+          ><v-icon class="mr-2">mdi-office-building</v-icon> Projects
+        </v-card-title>
+        <v-spacer />
+        <v-dialog v-model="newProjectDialog" max-width="400px">
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn depressed color="primary" dark v-bind="attrs" v-on="on">
+              Add
+            </v-btn>
+          </template>
+          <v-card class="py-2">
+            <v-card-title>
+              <span class="text-h5">Project</span>
+            </v-card-title>
+
+            <v-card-text>
+              <v-container>
+                <v-row no-gutters>
+                  <v-col cols="12">
+                    <v-text-field
+                      v-model="newProject.name"
+                      label="Display Name"
+                    ></v-text-field>
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col cols="6" sm="6">
+                    <v-text-field
+                      v-model="newProject.client"
+                      label="Client"
+                    ></v-text-field>
+                  </v-col>
+
+                  <v-col cols="6" sm="6">
+                    <v-text-field
+                      v-model="newProject.claimID"
+                      label="Claim ID"
+                    ></v-text-field>
+                  </v-col>
+                </v-row>
+              </v-container>
+            </v-card-text>
+
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn
+                color="blue darken-1"
+                text
+                @click="(newProjectDialog = false), resetNewProject()"
+              >
+                Cancel
+              </v-btn>
+              <v-btn color="blue darken-1" text @click="submitNewProject()">
+                Save
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+      </v-row>
       <v-data-table :headers="projectHeaders" :items="jobState.projects">
         <template v-slot:item.lastName="{ item }">
           {{ item.firstName }} {{ item.lastName }}
         </template>
+        <template v-slot:item.action="{ item }">
+          <v-row no-gutters justify="center">
+            <v-btn @click="removeProject(item)" icon
+              ><v-icon>mdi-close</v-icon></v-btn
+            >
+          </v-row>
+        </template>
       </v-data-table>
     </v-card>
+
     <v-card flat outlined class="mb-4" rounded="lg">
-      <v-card-title
-        ><v-icon class="mr-2">mdi-clock</v-icon> Shifts
-      </v-card-title>
-      <v-data-table :headers="shiftHeaders" :items="jobState.shifts">
-        <template v-slot:item.person="{ item }">
-          {{ jobState.personDict[item.person].firstName }}
-          {{ jobState.personDict[item.person].lastName }}
-        </template>
-        <template v-slot:item.project="{ item }">
-          {{ jobState.projectDict[item.project].name }}
-        </template>
-        <template v-slot:item.start="{ item }">
-          {{ new Date(item.start).toISOString() }}
-        </template>
-        <template v-slot:item.end="{ item }">
-          {{ new Date(item.end).toISOString() }}
-        </template>
-        <template v-slot:item.duration="{ item }">
-          {{ new Date(item.end).toISOString() }}
+      <v-row no-gutters class="pr-3" align="center">
+        <v-card-title
+          ><v-icon class="mr-2">mdi-clock</v-icon> Tasks
+        </v-card-title>
+        <v-spacer />
+        <v-dialog v-model="newTaskDialog" max-width="400px">
+          <template v-slot:activator="{ on, attrs }">
+            <v-btn depressed color="primary" dark v-bind="attrs" v-on="on">
+              Add
+            </v-btn>
+          </template>
+          <v-card class="py-2">
+            <v-card-title>
+              <span class="text-h5">Task</span>
+            </v-card-title>
+
+            <v-card-text>
+              <v-container>
+                <v-row no-gutters>
+                  <v-col cols="12">
+                    <v-text-field
+                      v-model="newTask.name"
+                      label="Display Name"
+                    ></v-text-field>
+                  </v-col>
+                </v-row>
+              </v-container>
+            </v-card-text>
+
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn
+                color="blue darken-1"
+                text
+                @click="(newTaskDialog = false), resetNewTask()"
+              >
+                Cancel
+              </v-btn>
+              <v-btn color="blue darken-1" text @click="submitNewTask()">
+                Save
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+      </v-row>
+      <v-data-table :headers="taskHeaders" :items="jobState.tasks">
+        <template v-slot:item.action="{ item }">
+          <v-row no-gutters justify="center">
+            <v-btn @click="removeTask(item)" icon
+              ><v-icon>mdi-close</v-icon></v-btn
+            >
+          </v-row>
         </template>
       </v-data-table>
     </v-card>
@@ -64,21 +200,26 @@
 
 <script>
 // @ is an alias to /src
-import { state as jobState } from "@/store.js";
+import {
+  addNewPerson,
+  state as jobState,
+  addNewProject,
+  addNewTask,
+  updateProject,
+  updateTask,
+  updatePerson,
+} from "@/store.js";
 import { defineComponent, onMounted, ref } from "@vue/composition-api";
 
 export default defineComponent({
   setup() {
+    const newPersonDialog = ref(false);
+    const newProjectDialog = ref(false);
     const selectedPerson = ref(null);
     const selectedProject = ref(null);
+    const newTaskDialog = ref(false);
+
     const peopleHeaders = [
-      {
-        text: "ID",
-        align: "start",
-        sortable: true,
-        value: "pid",
-        width: 120,
-      },
       {
         text: "Name",
         align: "start",
@@ -86,51 +227,39 @@ export default defineComponent({
         value: "lastName",
       },
       {
-        text: "Active",
-        align: "start",
-        sortable: true,
-        value: "active",
-        width: 120,
+        text: "Remove",
+        align: "center",
+        sortable: false,
+        value: "action",
+        width: 100,
       },
     ];
 
     const projectHeaders = [
       {
-        text: "ID",
-        align: "start",
-        sortable: true,
-        value: "id",
-        width: 120,
-      },
-      {
-        text: "Name",
+        text: "Display Name",
         align: "start",
         sortable: true,
         value: "name",
       },
       {
-        text: "Street",
+        text: "Client",
         align: "start",
         sortable: true,
-        value: "addressLine1",
+        value: "client",
       },
       {
-        text: "City",
+        text: "Claim ID",
         align: "start",
         sortable: true,
-        value: "city",
+        value: "claimID",
       },
       {
-        text: "State",
-        align: "start",
-        sortable: true,
-        value: "state",
-      },
-      {
-        text: "Zip",
-        align: "start",
-        sortable: true,
-        value: "zip",
+        text: "Remove",
+        align: "center",
+        sortable: false,
+        value: "action",
+        width: 100,
       },
     ];
     const shiftHeaders = [
@@ -158,13 +287,121 @@ export default defineComponent({
         sortable: true,
         value: "end",
       },
+
       {
         text: "Duration",
         align: "start",
         sortable: true,
         value: "duration",
       },
+      {
+        text: "Task",
+        align: "start",
+        sortable: true,
+        value: "task",
+      },
+      {
+        text: "Remove",
+        align: "center",
+        sortable: false,
+        value: "action",
+        width: 100,
+      },
     ];
+
+    const taskHeaders = [
+      {
+        text: "Name",
+        align: "start",
+        sortable: true,
+        value: "name",
+      },
+      {
+        text: "Remove",
+        align: "center",
+        sortable: false,
+        value: "action",
+        width: 100,
+      },
+    ];
+
+    const newPerson = ref({
+      firstName: null,
+      lastName: null,
+      pid: null,
+      active: true,
+    });
+
+    const newProject = ref({
+      name: null,
+      claimID: null,
+      client: null,
+      active: true,
+    });
+
+    const newTask = ref({
+      name: null,
+      active: true,
+    });
+
+    const resetNewTask = () => {
+      newTask.value = {
+        name: null,
+        active: true,
+      };
+    };
+
+    const resetNewProject = () => {
+      newPerson.value = {
+        displayName: null,
+        claimID: null,
+        client: null,
+        active: true,
+      };
+    };
+
+    const resetNewPerson = () => {
+      newPerson.value = {
+        firstName: null,
+        lastName: null,
+        pid: null,
+        active: true,
+      };
+    };
+
+    const submitNewProject = async () => {
+      await addNewProject(newProject.value);
+      resetNewProject();
+      newProjectDialog.value = false;
+    };
+
+    const submitNewTask = async () => {
+      await addNewTask(newTask.value);
+      resetNewTask();
+      newTaskDialog.value = false;
+    };
+
+    const submitNewPerson = async () => {
+      await addNewPerson(newPerson.value);
+      resetNewPerson();
+      newPersonDialog.value = false;
+    };
+
+    const removePerson = async (person) => {
+      console.log("removing person");
+      person.active = false;
+      await updatePerson(person);
+    };
+
+    const removeProject = async (project) => {
+      project.active = false;
+      await updateProject(project);
+    };
+
+    const removeTask = async (task) => {
+      task.active = false;
+      await updateTask(task);
+    };
 
     onMounted(() => {});
     return {
@@ -174,6 +411,22 @@ export default defineComponent({
       peopleHeaders,
       projectHeaders,
       shiftHeaders,
+      newPerson,
+      newPersonDialog,
+      resetNewPerson,
+      submitNewPerson,
+      taskHeaders,
+      newProjectDialog,
+      newProject,
+      resetNewProject,
+      submitNewProject,
+      submitNewTask,
+      resetNewTask,
+      newTask,
+      removePerson,
+      removeProject,
+      removeTask,
+      newTaskDialog,
     };
   },
 });
