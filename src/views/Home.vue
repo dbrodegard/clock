@@ -5,7 +5,11 @@
       class="pa-0"
       v-model="progress"
     >
-      <v-window-item v-for="(item, index) in slides" :key="index">
+      <v-window-item
+        class="z-index:200"
+        v-for="(item, index) in slides"
+        :key="index"
+      >
         <v-card dark class="pa-4 pt-7" tile color="#CA1615">
           <v-row align="center" no-gutters>
             <h1 style="font-size: 38px; font-weight: 900">
