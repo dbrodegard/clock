@@ -105,19 +105,19 @@
     >
       <template v-slot:item.person="{ item }">
         <span v-if="jobState.personDict[item.person]">
-          {{ jobState.personDict[item.person].firstName }}
-          {{ jobState.personDict[item.person].lastName }}
+          {{ jobState.fullPeopleDict[item.person].firstName }}
+          {{ jobState.fullPeopleDict[item.person].lastName }}
         </span>
       </template>
       <template v-slot:item.project="{ item }">
-        <span v-if="jobState.projectDict[item.project]">{{
-          jobState.projectDict[item.project].name
+        <span v-if="jobState.fullProjectsDict[item.project]">{{
+          jobState.fullProjectsDict[item.project].name
         }}</span>
       </template>
 
       <template v-slot:item.task="{ item }">
-        <span v-if="jobState.taskDict[item.task]">{{
-          jobState.taskDict[item.task].name
+        <span v-if="jobState.fullTasksDict[item.task]">{{
+          jobState.fullTasksDict[item.task].name
         }}</span>
       </template>
 
@@ -129,9 +129,12 @@
       </template>
 
       <template v-slot:item.end="{ item }">
-        <span
+        <span v-if="item.end"
           >{{ new Date(item.end).toLocaleDateString() }}
           {{ new Date(item.end).toLocaleTimeString() }}</span
+        >
+        <v-chip outlined color="green" dark small v-if="!item.end"
+          >Active</v-chip
         >
       </template>
 

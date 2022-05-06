@@ -19,14 +19,24 @@ Vue.use(VueCompositionAPI);
 export const state = reactive({
   people: [],
   peopleDict: {},
-  projectDict: {},
+  projectsDict: {},
   projects: [],
   shifts: [],
   tasks: [],
   taskDict: {},
-  selectedPersonOpenTasks: [],
+  fullPeopleDict: null,
+  fullProjectsDict: {},
+  fullTasksDict: {},
+  storedPerson: null,
+  openShiftsByPerson: null,
   db: null,
 });
+
+export const storedSettings = reactive({
+  person: {},
+});
+
+export const employees = reactive({});
 
 export const addNewPerson = async (person) => {
   await addDoc(collection(state.db, "people"), person);
@@ -41,7 +51,7 @@ export const addNewTask = async (task) => {
 };
 
 export const addNewShift = async (shift) => {
-  await addDoc(collection(state.db, "shifts"), shift);
+  return await addDoc(collection(state.db, "shifts"), shift);
 };
 
 export const getOpenTasks = async (personReference) => {
@@ -63,6 +73,7 @@ export const getOpenTasks = async (personReference) => {
 };
 
 export const updateShift = async (shift) => {
+  console.log("updating shift", shift);
   await setDoc(doc(state.db, "shifts", shift.reference), shift);
 };
 
@@ -80,7 +91,7 @@ export const updateProject = async (project) => {
 };
 
 export const initialize = () => {
-  console.log("initializing");
+  let rememberedEmployee = localStorage.getItem("selectedPersonReference");
   const firebaseConfig = {
     apiKey: "AIzaSyDTiJAB4djq-6cSu8Zkrmt2uvhpTNwVoMc",
     authDomain: "legaldocs-d3265.firebaseapp.com",
@@ -95,15 +106,23 @@ export const initialize = () => {
 
   state.db = getFirestore(app);
 
-  const q = query(collection(state.db, "people"), where("active", "==", true));
+  const q = query(collection(state.db, "people"));
   onSnapshot(q, (querySnapshot) => {
     state.people = [];
     state.personDict = {};
+    state.fullPeopleDict = {};
     querySnapshot.forEach((doc) => {
       let person = doc.data();
       person.reference = doc.id;
-      state.personDict[person.reference] = person;
-      state.people.push(person);
+      state.fullPeopleDict[person.reference] = person;
+      employees[person.reference] = person;
+      if (rememberedEmployee === person.reference) {
+        storedSettings.person = person;
+      }
+      if (person.active) {
+        state.personDict[person.reference] = person;
+        state.people.push(person);
+      }
     });
   });
 
@@ -114,39 +133,51 @@ export const initialize = () => {
   onSnapshot(a, (querySnapshot) => {
     state.projects = [];
     state.projectsDict = {};
+    state.fullProjectsDict = {};
     querySnapshot.forEach((doc) => {
       let project = doc.data();
       project.reference = doc.id;
-      state.projectDict[project.reference] = project;
-      state.projects.push(project);
+      state.fullProjectsDict[project.reference] = project;
+      if (project.active) {
+        state.projectsDict[project.reference] = project;
+        state.projects.push(project);
+      }
     });
   });
 
-  const c = query(
-    collection(state.db, "shifts"),
-
-    // where("hidden", "!=", true),
-    // orderBy("hidden", "desc"),
-    orderBy("start", "desc")
-  );
-  onSnapshot(c, (querySnapshot) => {
-    state.shifts = [];
-    querySnapshot.forEach((doc) => {
-      state.shifts.push(doc.data());
-    });
-  });
-
-  const t = query(collection(state.db, "tasks"), where("active", "==", true));
+  const t = query(collection(state.db, "tasks"));
   onSnapshot(t, (querySnapshot) => {
     state.tasks = [];
     state.taskDict = {};
+    state.fullTasksDict = {};
     querySnapshot.forEach((doc) => {
       let task = doc.data();
       task.reference = doc.id;
-      state.taskDict[task.reference] = task;
-      state.tasks.push(task);
+      state.fullTasksDict[task.reference] = task;
+      if (task.active) {
+        state.taskDict[task.reference] = task;
+        state.tasks.push(task);
+      }
     });
   });
+
+  const c = query(collection(state.db, "shifts"), orderBy("start", "desc"));
+  onSnapshot(c, (querySnapshot) => {
+    state.shifts = [];
+    let localShifts = {};
+    querySnapshot.forEach((doc) => {
+      let shift = doc.data();
+      shift.reference = doc.id;
+      if (shift.open) {
+        localShifts[shift.person] = shift;
+      }
+      state.shifts.push(shift);
+    });
+
+    state.openShiftsByPerson = localShifts;
+  });
+
+  return true;
 };
 
 export default {};

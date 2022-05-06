@@ -1,6 +1,6 @@
 <template>
   <v-app id="app">
-    <v-main>
+    <v-main v-if="jobState.fullPeopleDict && jobState.openShiftsByPerson">
       <router-view />
     </v-main>
   </v-app>
@@ -8,14 +8,15 @@
 
 <script>
 import { initialize, state as jobState } from "@/store.js";
-import { defineComponent, onMounted } from "@vue/composition-api";
+import { defineComponent, onMounted, ref } from "@vue/composition-api";
 
 export default defineComponent({
   setup() {
-    onMounted(() => {
-      initialize();
+    const isReady = ref(false);
+    onMounted(async () => {
+      isReady.value = await initialize();
     });
-    return { jobState };
+    return { jobState, isReady };
   },
 });
 </script>

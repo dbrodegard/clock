@@ -1,46 +1,59 @@
 <template>
   <v-container class="pa-0" fluid>
-    <v-window
-      style="position: sticky; top: 0px"
-      class="pa-0"
-      v-model="progress"
+    <v-card
+      dark
+      :color="activeShift ? 'green' : '#222222'"
+      tile
+      flat
+      style="position: sticky; top: 0px; z-index: 500"
     >
-      <v-window-item
-        class="z-index:200"
-        v-for="(item, index) in slides"
-        :key="index"
-      >
-        <v-card dark class="pa-4 pt-7" tile color="#CA1615">
-          <v-row align="center" no-gutters>
-            <h1 style="font-size: 38px; font-weight: 900">
-              {{ item.title }}
-            </h1>
-            <v-spacer />
-            <v-btn
-              class="font-weight-bold"
-              getOpenTasks
-              x-large
-              v-if="progress === 0 && false"
-              @click="toggleLang()"
-              icon
-              >EN</v-btn
-            >
-            <v-btn
-              x-large
-              v-if="progress < 4 && progress > 0"
-              @click="cancelBack()"
-              icon
-              ><v-icon>mdi-close</v-icon></v-btn
-            >
-          </v-row>
-          <v-row no-gutters>
-            <h1 style="font-size: 18px" class="white--text">
-              {{ item.description }}
-            </h1>
-          </v-row>
-        </v-card>
-      </v-window-item>
-    </v-window>
+      <v-row class="pt-6" align="center" justify="center" no-gutters>
+        <v-img
+          :src="require('../assets/restoreproW.png')"
+          contain
+          height="40"
+        />
+      </v-row>
+      <v-card flat color="transparent" class="flex px-4" height="50">
+        <v-row no-gutters align="end" class="fill-height">
+          <span style="font-size: 20px; font-weight: 900" v-if="selectedPerson"
+            >{{ selectedPerson.firstName }} {{ selectedPerson.lastName }}</span
+          >
+        </v-row>
+      </v-card>
+      <v-window class="pa-0" v-model="progress">
+        <v-window-item v-for="(item, index) in slides" :key="index">
+          <v-card dark class="pa-4 pt-0" tile color="transparent">
+            <v-row align="center" no-gutters>
+              <h1 style="font-size: 38px; font-weight: 900">
+                {{ item.title }}
+              </h1>
+              <v-spacer />
+              <v-btn
+                class="font-weight-bold"
+                x-large
+                v-if="progress === 0 && false"
+                @click="toggleLang()"
+                icon
+                >EN</v-btn
+              >
+              <v-btn
+                x-large
+                v-if="progress < 4 && progress > 0"
+                @click="cancelBack()"
+                icon
+                ><v-icon>mdi-close</v-icon></v-btn
+              >
+            </v-row>
+            <v-row no-gutters>
+              <h1 style="font-size: 18px" class="white--text">
+                {{ item.description }}
+              </h1>
+            </v-row>
+          </v-card>
+        </v-window-item>
+      </v-window>
+    </v-card>
 
     <v-slide-y-reverse-transition hide-on-leave>
       <v-row v-if="progress === 0" class="ml-4 mt-4" no-gutters>
@@ -303,14 +316,13 @@
 import {
   state as jobState,
   addNewShift,
-  getOpenTasks,
   updateShift,
+  storedSettings,
 } from "@/store.js";
 import {
   defineComponent,
-  onMounted,
+  onBeforeMount,
   ref,
-  computed,
   watch,
 } from "@vue/composition-api";
 
@@ -341,9 +353,9 @@ export default defineComponent({
         description: "Press the start button to begin",
       },
       {
-        title: "Active Task",
+        title: "Clocked In",
         array: null,
-        description: "Currently clocked in",
+        description: "Active Task",
       },
     ]);
 
@@ -351,39 +363,30 @@ export default defineComponent({
     const selectedProject = ref(null);
     const selectedTask = ref(null);
 
-    watch(selectedPerson, async (currentValue) => {
-      console.log("selected person");
+    const activeShift = ref(null);
+
+    watch(selectedPerson, (currentValue) => {
       if (currentValue) {
-        await getOpenTasks(selectedPerson.value.reference);
-      }
-    });
+        localStorage.setItem("selectedPersonReference", currentValue.reference);
+        if (jobState.openShiftsByPerson[currentValue.reference]) {
+          console.log(
+            "looks like you found a job",
+            jobState.openShiftsByPerson[currentValue.reference]
+          );
 
-    const activity = ref(["Drive", "cleanup"]);
+          activeShift.value =
+            jobState.openShiftsByPerson[currentValue.reference];
 
-    const activeShift = computed(() => {
-      // see if there is an active shift for this person
-      if (jobState.selectedPersonOpenTasks.length > 0) {
-        return true;
-      }
-      return false;
-    });
+          selectedProject.value =
+            jobState.fullProjectsDict[activeShift.value.project];
 
-    watch(activeShift, (val) => {
-      console.log("active shift");
-      if (val) {
-        console.log("updating selecteds", val);
-
-        selectedProject.value = jobState.projects.find(
-          (element) =>
-            (element.reference = jobState.selectedPersonOpenTasks[0].project)
-        );
-        selectedTask.value = jobState.tasks.find(
-          (element) =>
-            (element.reference = jobState.selectedPersonOpenTasks[0].task)
-        );
-
-        console.log(selectedProject.value);
-        progress.value = 4;
+          selectedTask.value = jobState.fullTasksDict[activeShift.value.task];
+          progress.value = 4;
+        }
+      } else {
+        activeShift.value = null;
+        selectedProject.value = null;
+        selectedTask.value = null;
       }
     });
 
@@ -395,15 +398,17 @@ export default defineComponent({
         start: new Date().getTime(),
         open: true,
       };
+      activeShift.value = shift;
+      progress.value = 4;
 
-      console.log("shift", shift);
-      await addNewShift(shift);
-      await getOpenTasks(selectedPerson.value.reference);
+      let reference = await addNewShift(shift);
+      shift.reference = reference.id;
+      activeShift.value = shift;
     };
 
     const clockOut = async () => {
       // there should only ever be one open task...
-      let taskToUpdate = jobState.selectedPersonOpenTasks[0];
+      let taskToUpdate = activeShift.value;
 
       if (taskToUpdate) {
         taskToUpdate.end = new Date().getTime();
@@ -411,14 +416,14 @@ export default defineComponent({
         taskToUpdate.duration = taskToUpdate.end - taskToUpdate.start;
         updateShift(taskToUpdate);
       }
-
-      selectedPerson.value = null;
+      activeShift.value = null;
       selectedProject.value = null;
-      progress.value = 0;
+      selectedTask.value = null;
+      progress.value = 1;
     };
 
     const switchTasks = async () => {
-      let taskToUpdate = jobState.selectedPersonOpenTasks[0];
+      let taskToUpdate = activeShift.value;
 
       if (taskToUpdate) {
         taskToUpdate.end = new Date().getTime();
@@ -427,6 +432,7 @@ export default defineComponent({
         updateShift(taskToUpdate);
       }
       selectedProject.value = null;
+      activeShift.value = null;
       progress.value = 1;
     };
 
@@ -450,13 +456,17 @@ export default defineComponent({
       }
     };
 
-    onMounted(() => {});
+    onBeforeMount(() => {
+      if (storedSettings.person) {
+        selectedPerson.value = storedSettings.person;
+        progress.value = 1;
+      }
+    });
     return {
       jobState,
       selectedPerson,
       selectedProject,
       setShift,
-      activity,
       activeShift,
       progress,
       slides,
@@ -464,6 +474,7 @@ export default defineComponent({
       clockOut,
       switchTasks,
       cancelBack,
+      storedSettings,
     };
   },
 });
