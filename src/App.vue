@@ -3,14 +3,17 @@
     <v-main v-if="jobState.fullPeopleDict && jobState.openShiftsByPerson">
       <router-view />
     </v-main>
+    <snackbar-refresh />
   </v-app>
 </template>
 
 <script>
 import { initialize, state as jobState } from "@/store.js";
 import { defineComponent, onMounted, ref } from "@vue/composition-api";
+import SnackbarRefresh from "./components/SnackbarRefresh.vue";
 
 export default defineComponent({
+  components: { SnackbarRefresh },
   setup() {
     const isReady = ref(false);
     onMounted(async () => {

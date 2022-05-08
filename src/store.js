@@ -33,7 +33,7 @@ export const state = reactive({
 });
 
 export const storedSettings = reactive({
-  person: {},
+  person: null,
 });
 
 export const employees = reactive({});
@@ -89,6 +89,18 @@ export const updatePerson = async (person) => {
 export const updateProject = async (project) => {
   await setDoc(doc(state.db, "project", project.reference), project);
 };
+
+export function msToMinutesAndSeconds(ms) {
+  if (!ms) return "00:00:00";
+  let seconds = Math.floor((ms / 1000) % 60);
+  let minutes = Math.floor((ms / (1000 * 60)) % 60);
+  let hours = Math.floor(ms / (1000 * 60 * 60));
+  hours = hours < 10 ? "0" + hours : hours;
+  minutes = minutes < 10 ? "0" + minutes : minutes;
+  seconds = seconds < 10 ? "0" + seconds : seconds;
+
+  return hours + ":" + minutes + ":" + seconds;
+}
 
 export const initialize = () => {
   let rememberedEmployee = localStorage.getItem("selectedPersonReference");

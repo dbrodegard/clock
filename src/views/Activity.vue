@@ -138,6 +138,12 @@
         >
       </template>
 
+      <template v-slot:item.duration="{ item }">
+        <span v-if="item.duration">{{
+          msToMinutesAndSeconds(item.duration)
+        }}</span>
+      </template>
+
       <template v-slot:item.action="{ item }">
         <v-row no-gutters justify="center">
           <v-btn @click="removeShift(item)" icon
@@ -159,6 +165,7 @@ import {
   updateProject,
   updateTask,
   updateShift,
+  msToMinutesAndSeconds,
 } from "@/store.js";
 import { defineComponent, onMounted, ref } from "@vue/composition-api";
 
@@ -379,6 +386,7 @@ export default defineComponent({
       newTaskDialog,
       dateRange,
       removeShift,
+      msToMinutesAndSeconds,
     };
   },
 });
