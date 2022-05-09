@@ -87,7 +87,7 @@ export const updatePerson = async (person) => {
 };
 
 export const updateProject = async (project) => {
-  await setDoc(doc(state.db, "project", project.reference), project);
+  await setDoc(doc(state.db, "projects", project.reference), project);
 };
 
 export function msToMinutesAndSeconds(ms) {
@@ -138,10 +138,7 @@ export const initialize = () => {
     });
   });
 
-  const a = query(
-    collection(state.db, "projects"),
-    where("active", "==", true)
-  );
+  const a = query(collection(state.db, "projects"));
   onSnapshot(a, (querySnapshot) => {
     state.projects = [];
     state.projectsDict = {};

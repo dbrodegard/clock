@@ -126,8 +126,8 @@
         </v-dialog>
       </v-row>
       <v-data-table :headers="projectHeaders" :items="jobState.projects">
-        <template v-slot:item.lastName="{ item }">
-          {{ item.firstName }} {{ item.lastName }}
+        <template v-slot:item.name="{ item }">
+          {{ item.name }}
         </template>
         <template v-slot:item.action="{ item }">
           <v-row no-gutters justify="center">
@@ -370,25 +370,30 @@ export default defineComponent({
     };
 
     const submitNewProject = async () => {
-      await addNewProject(newProject.value);
-      resetNewProject();
-      newProjectDialog.value = false;
+      if (newProject.value.name && newProject.value.name !== "") {
+        newProjectDialog.value = false;
+        await addNewProject(newProject.value);
+        resetNewProject();
+      }
     };
 
     const submitNewTask = async () => {
-      await addNewTask(newTask.value);
-      resetNewTask();
-      newTaskDialog.value = false;
+      if (newTask.value.nme && newTask.value.name !== "") {
+        newTaskDialog.value = false;
+        await addNewTask(newTask.value);
+        resetNewTask();
+      }
     };
 
     const submitNewPerson = async () => {
-      await addNewPerson(newPerson.value);
-      resetNewPerson();
-      newPersonDialog.value = false;
+      if (newPerson.value.lastName && newPerson.value.lastName !== "") {
+        newPersonDialog.value = false;
+        await addNewPerson(newPerson.value);
+        resetNewPerson();
+      }
     };
 
     const removePerson = async (person) => {
-      console.log("removing person");
       person.active = false;
       await updatePerson(person);
     };

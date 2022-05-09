@@ -72,18 +72,20 @@
       </v-row>
       <v-btn
         tile
-        x-large
         depressed
         @click="resetSelectedPerson()"
         block
-        style="font-size: 16px; font-weight: 900"
         :style="nameSelectStyle"
         class="px-4 text-none"
+        id="buttonStyle"
       >
-        <v-row no-gutters align="center" justify="start">
-          <v-icon class="mr-2">mdi-account</v-icon>
+        <v-row no-gutters align="center" justify="start" class="fill-height">
+          <v-icon size="25" class="mr-3">mdi-account</v-icon>
           <v-slide-x-transition hide-on-leave>
-            <span v-if="selectedPerson"
+            <span
+              v-if="selectedPerson"
+              class="text-truncate"
+              style="width: 60vw; text-align: left"
               >{{ selectedPerson.firstName }}
               {{ selectedPerson.lastName }}</span
             >
@@ -91,70 +93,93 @@
           <v-slide-x-reverse-transition hide-on-leave>
             <span v-if="!selectedPerson">Select your name</span>
           </v-slide-x-reverse-transition>
-          <v-spacer /><v-icon
-            v-if="selectedPerson !== null && activeShift === null"
-            >mdi-close</v-icon
-          >
-        </v-row>
-      </v-btn>
-
-      <v-btn
-        tile
-        x-large
-        depressed
-        @click="resetSelectedProject()"
-        block
-        style="font-size: 16px; font-weight: 900; opacity: 1"
-        :disabled="!selectedPerson"
-        :style="projectSelectStyle"
-        class="px-4 text-none"
-      >
-        <v-row no-gutters align="center" justify="start">
-          <v-icon class="mr-2">mdi-office-building</v-icon>
-          <v-slide-x-transition hide-on-leave>
-            <span
-              class="text-truncate"
-              style="width: 70vw; text-align: left"
-              v-if="selectedProject"
-              >{{ selectedProject.name }}</span
+          <v-spacer />
+          <v-scale-transition origin="center center" hide-on-leave>
+            <v-chip
+              color="red"
+              v-if="selectedPerson !== null && activeShift === null"
             >
-          </v-slide-x-transition>
-          <v-slide-x-reverse-transition hide-on-leave>
-            <span v-if="!selectedProject">Select Project</span>
-          </v-slide-x-reverse-transition>
-
-          <v-spacer /><v-icon
-            v-if="selectedProject !== null && activeShift === null"
-            >mdi-close</v-icon
-          >
+              <span>Out</span>
+            </v-chip>
+          </v-scale-transition>
+          <v-scale-transition origin="center center" hide-on-leave>
+            <v-chip
+              light
+              color="white"
+              v-if="selectedPerson !== null && activeShift !== null"
+            >
+              <span>In</span>
+            </v-chip>
+          </v-scale-transition>
         </v-row>
       </v-btn>
-
-      <v-btn
-        tile
-        x-large
-        depressed
-        @click="resetSelectedTask()"
-        block
-        style="font-size: 16px; font-weight: 900"
-        :disabled="!selectedPerson || !selectedProject"
-        :style="taskSelectStyle"
-        class="px-4 text-none"
-      >
-        <v-row no-gutters align="center" justify="start">
-          <v-icon class="mr-2">mdi-hammer-wrench</v-icon>
-          <v-slide-x-transition hide-on-leave>
-            <span v-if="selectedTask">{{ selectedTask.name }}</span>
-          </v-slide-x-transition>
-          <v-slide-x-reverse-transition hide-on-leave>
-            <span v-if="!selectedTask">Select Task</span>
-          </v-slide-x-reverse-transition>
-          <v-spacer /><v-icon
-            v-if="selectedTask !== null && activeShift === null"
-            >mdi-close</v-icon
+      <v-expand-transition>
+        <div v-if="selectedPerson">
+          <v-btn
+            tile
+            depressed
+            @click="resetSelectedProject()"
+            block
+            :disabled="!selectedPerson"
+            :style="projectSelectStyle"
+            class="px-4 text-none"
+            id="buttonStyle"
           >
-        </v-row>
-      </v-btn>
+            <v-row no-gutters align="center" justify="start">
+              <v-icon size="25" class="mr-3">mdi-office-building</v-icon>
+              <v-slide-x-transition hide-on-leave>
+                <span
+                  class="text-truncate"
+                  style="width: 70vw; text-align: left"
+                  v-if="selectedProject"
+                  >{{ selectedProject.name }}</span
+                >
+              </v-slide-x-transition>
+              <v-slide-x-reverse-transition hide-on-leave>
+                <span v-if="!selectedProject">Select Project</span>
+              </v-slide-x-reverse-transition>
+
+              <v-spacer /><v-icon
+                v-if="selectedProject !== null && activeShift === null"
+                >mdi-close</v-icon
+              >
+            </v-row>
+          </v-btn>
+        </div>
+      </v-expand-transition>
+      <v-expand-transition>
+        <div v-if="selectedPerson && selectedProject">
+          <v-btn
+            tile
+            depressed
+            @click="resetSelectedTask()"
+            block
+            :disabled="!selectedPerson || !selectedProject"
+            :style="taskSelectStyle"
+            class="px-4 text-none"
+            id="buttonStyle"
+          >
+            <v-row no-gutters align="center" justify="start">
+              <v-icon size="25" class="mr-3">mdi-hammer-wrench</v-icon>
+              <v-slide-x-transition hide-on-leave>
+                <span
+                  class="text-truncate"
+                  style="width: 70vw; text-align: left"
+                  v-if="selectedTask"
+                  >{{ selectedTask.name }}</span
+                >
+              </v-slide-x-transition>
+              <v-slide-x-reverse-transition hide-on-leave>
+                <span v-if="!selectedTask">Select Task</span>
+              </v-slide-x-reverse-transition>
+              <v-spacer /><v-icon
+                v-if="selectedTask !== null && activeShift === null"
+                >mdi-close</v-icon
+              >
+            </v-row>
+          </v-btn>
+        </div>
+      </v-expand-transition>
     </v-card>
 
     <v-slide-y-reverse-transition hide-on-leave>
@@ -189,38 +214,22 @@
       </v-row>
     </v-slide-y-reverse-transition>
     <v-slide-y-reverse-transition hide-on-leave>
-      <v-row v-if="progress === 1" class="ml-4 mt-4" no-gutters>
-        <v-col
-          v-for="(project, index) in jobState.projects"
-          :key="index + 'project'"
-          cols="12"
-        >
+      <v-row v-if="progress === 1" class="mx-4 mt-4" no-gutters>
+        <v-col cols="12">
           <v-card
+            v-for="(project, index) in jobState.projects"
+            :key="index + 'project'"
             @click="(selectedProject = project), (progress = progress + 1)"
-            class="flex mr-4 mb-4 pa-4"
-            color="grey lighten-3"
+            class="flex mb-4 pa-4"
             flat
             rounded="lg"
+            color="grey lighten-3"
           >
-            <v-row no-gutters>
-              <v-avatar size="60" color="#222222">
-                <v-icon size="30" color="white">mdi-office-building</v-icon>
-              </v-avatar>
-
-              <v-col class="ml-3">
-                <v-row
-                  style="font-size: 18px"
-                  class="font-weight-bold"
-                  justify="start"
-                  no-gutters
-                >
-                  <span>{{ project.name }}</span>
-                </v-row>
-                <v-row style="font-size: 16px" justify="start" no-gutters>
-                  <span>{{ project.client }}</span>
-                  <span class="ml-2">{{ project.claimID }}</span>
-                </v-row>
-              </v-col>
+            <v-row justify="start" align="center" no-gutters>
+              <v-icon class="mr-3" size="25">mdi-office-building</v-icon>
+              <span style="font-size: 18px" class="font-weight-bold">{{
+                project.name
+              }}</span>
             </v-row>
           </v-card>
         </v-col>
@@ -228,26 +237,43 @@
     </v-slide-y-reverse-transition>
 
     <v-slide-y-reverse-transition hide-on-leave>
-      <v-row v-if="progress === 2" class="ml-4 mt-4" no-gutters>
-        <v-col
-          v-for="(task, index) in jobState.tasks"
-          :key="index + 'task'"
-          cols="6"
-        >
+      <v-row v-if="progress === 1 && false" no-gutters>
+        <v-col cols="12">
           <v-card
+            v-for="(project, index) in jobState.projects"
+            :key="index + 'project'"
+            @click="(selectedProject = project), (progress = progress + 1)"
+            class="flex pa-4"
+            flat
+            color="grey lighten-3"
+            tile
+            style="margin-top: 1px"
+          >
+            <v-row justify="start" align="center" no-gutters>
+              <v-icon class="mr-3" size="25">mdi-office-building</v-icon>
+              <span style="font-size: 18px" class="font-weight-bold">{{
+                project.name
+              }}</span>
+            </v-row>
+          </v-card>
+        </v-col>
+      </v-row>
+    </v-slide-y-reverse-transition>
+
+    <v-slide-y-reverse-transition hide-on-leave>
+      <v-row v-if="progress === 2" class="mx-4 mt-4" no-gutters>
+        <v-col cols="12">
+          <v-card
+            v-for="(task, index) in jobState.tasks"
+            :key="index + 'task'"
             @click="(selectedTask = task), (progress = progress + 1)"
-            class="flex mr-4 mb-4 pa-4"
+            class="flex mb-4 pa-4"
             flat
             rounded="lg"
             color="grey lighten-3"
-            min-height="180"
           >
-            <v-row class="py-3" no-gutters justify="center">
-              <v-avatar size="60" color="#222222">
-                <v-icon size="30" color="white">mdi-hammer-wrench</v-icon>
-              </v-avatar>
-            </v-row>
-            <v-row justify="center" no-gutters>
+            <v-row justify="start" align="center" no-gutters>
+              <v-icon class="mr-3" size="25">mdi-hammer-wrench</v-icon>
               <span style="font-size: 18px" class="font-weight-bold">{{
                 task.name
               }}</span>
@@ -257,7 +283,7 @@
       </v-row>
     </v-slide-y-reverse-transition>
 
-    <v-slide-y-reverse-transition hide-on-leave>
+    <!-- <v-slide-y-reverse-transition hide-on-leave>
       <v-card
         v-if="progress > 2"
         class="mt-4 px-4"
@@ -271,7 +297,7 @@
           }}</span>
         </v-row>
       </v-card>
-    </v-slide-y-reverse-transition>
+    </v-slide-y-reverse-transition> -->
 
     <!-- <v-slide-y-reverse-transition hide-on-leave>
       <v-row v-if="progress === 3" class="mx-4 mt-4" no-gutters>
@@ -320,58 +346,68 @@
       </v-row>
     </v-slide-y-reverse-transition> -->
 
-    <v-slide-y-reverse-transition hide-on-leave>
-      <v-footer v-if="progress === 3" color="transparent" class="pb-6" app>
-        <v-row v-if="progress === 3" class="mt-4" no-gutters>
+    <!-- <v-slide-y-reverse-transition hide-on-leave>
+      <v-footer v-if="progress === 3" color="transparent" class="pb-4" app>
+        <v-row no-gutters>
           <v-col cols="12">
             <v-btn
+              id="buttonStyle"
               depressed
               dark
               color="green"
-              class="mb-4"
               x-large
               @click="setShift()"
               block
-              >Start</v-btn
+              >Clock In</v-btn
             >
-            <v-btn
-              depressed
-              dark
-              color="red"
-              x-large
-              @click="cancelBack()"
-              block
-              >Cancel</v-btn
-            >
+           
           </v-col>
         </v-row>
       </v-footer>
-    </v-slide-y-reverse-transition>
+    </v-slide-y-reverse-transition> -->
 
     <v-slide-y-reverse-transition hide-on-leave>
-      <v-footer v-if="progress === 4" color="transparent" class="pb-6" app>
+      <v-footer v-if="progress > 2" color="transparent" class="pb-8" app>
         <v-row no-gutters>
           <v-col>
             <v-btn
+              v-if="progress > 2"
+              id="actionButtonStyle"
               depressed
               dark
-              color="grey darken-3"
+              color="green"
               x-large
-              @click="switchTasks"
-              class="mb-4"
+              @click="setShift()"
               block
-              >Switch Task</v-btn
             >
-            <v-btn
-              depressed
-              dark
-              color="red"
-              x-large
-              @click="clockOut"
-              class="mb-4"
-              block
-              >Clock Out</v-btn
-            >
+              <span v-if="!activeShift">Start</span>
+              <span v-if="activeShift">{{ sessionLengthString }}</span>
+            </v-btn>
+            <v-expand-transition>
+              <div v-if="progress === 4">
+                <v-btn
+                  id="actionButtonStyle"
+                  depressed
+                  dark
+                  color="grey darken-3"
+                  x-large
+                  @click="switchTasks"
+                  class="mb-4 mt-4"
+                  block
+                  >Switch Task</v-btn
+                >
+                <v-btn
+                  id="actionButtonStyle"
+                  depressed
+                  dark
+                  color="red"
+                  x-large
+                  @click="clockOut"
+                  block
+                  >Clock Out</v-btn
+                >
+              </div>
+            </v-expand-transition>
           </v-col>
         </v-row>
       </v-footer>
@@ -455,20 +491,20 @@ export default defineComponent({
 
     const nameSelectStyle = computed(() => {
       if (selectedPerson.value === null) {
-        return "background-color: #ffffff1a";
+        return "background-color: #ffffff4d;";
       }
-      return "background-color: #ffffff1a";
+      return "background-color: transparent";
     });
 
     const projectSelectStyle = computed(() => {
       if (selectedPerson.value !== null && selectedProject.value === null) {
-        return "background-color: #ffffff33;";
+        return "background-color: #ffffff4d;";
       }
       if (selectedPerson.value !== null && selectedProject.value !== null) {
-        return "background-color: #ffffff33";
+        return "background-color: transparent";
       }
 
-      return "background-color: #ffffff33;";
+      return "background-color: transparent";
     });
 
     const taskSelectStyle = computed(() => {
@@ -484,9 +520,9 @@ export default defineComponent({
         selectedProject.value !== null &&
         selectedTask.value !== null
       ) {
-        return "background-color: #ffffff4d";
+        return "background-color: transparent";
       }
-      return "background-color: #ffffff4d;";
+      return "background-color: transparent";
     });
 
     watch(selectedPerson, (currentValue) => {
@@ -515,6 +551,9 @@ export default defineComponent({
     });
 
     const resetSelectedPerson = () => {
+      if (activeShift.value) {
+        return;
+      }
       progress.value = 0;
       selectedPerson.value = null;
       selectedProject.value = null;
@@ -522,30 +561,38 @@ export default defineComponent({
     };
 
     const resetSelectedProject = () => {
+      if (activeShift.value) {
+        return;
+      }
       progress.value = 1;
       selectedProject.value = null;
       selectedTask.value = null;
     };
 
     const resetSelectedTask = () => {
+      if (activeShift.value) {
+        return;
+      }
       progress.value = 2;
       selectedTask.value = null;
     };
 
     const setShift = async () => {
-      let shift = {
-        person: selectedPerson.value.reference,
-        project: selectedProject.value.reference,
-        task: selectedTask.value.reference,
-        start: new Date().getTime(),
-        open: true,
-      };
-      activeShift.value = shift;
-      progress.value = 4;
+      if (!activeShift.value) {
+        let shift = {
+          person: selectedPerson.value.reference,
+          project: selectedProject.value.reference,
+          task: selectedTask.value.reference,
+          start: new Date().getTime(),
+          open: true,
+        };
+        activeShift.value = shift;
+        progress.value = 4;
 
-      let reference = await addNewShift(shift);
-      shift.reference = reference.id;
-      activeShift.value = shift;
+        let reference = await addNewShift(shift);
+        shift.reference = reference.id;
+        activeShift.value = shift;
+      }
     };
 
     const clockOut = async () => {
@@ -651,3 +698,21 @@ export default defineComponent({
   },
 });
 </script>
+
+<style lang="scss" scoped>
+#buttonStyle {
+  //background-color: green;
+  //transition: all 0.2s;
+  height: 60px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+#actionButtonStyle {
+  //background-color: green;
+  //transition: all 0.2s;
+  height: 60px;
+  font-size: 18px;
+  font-weight: 600;
+}
+</style>

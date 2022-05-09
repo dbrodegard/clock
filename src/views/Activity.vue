@@ -1,10 +1,14 @@
 <template>
   <v-container fluid class="pa-0">
     <v-navigation-drawer dark width="300" color="#222222" permanent app>
-      <v-app-bar flat height="64">
-        <h1 style="font-size: 22px; font-weight: 900; opacity: 0.5">Filter</h1>
+      <v-app-bar fixed flat height="64">
+        <h1 style="font-size: 22px; font-weight: 900; opacity: 0.5">Filters</h1>
       </v-app-bar>
-      <v-row style="postion: relative" class="px-4 pt-4" no-gutters>
+      <v-row
+        style="postion: relative; margin-top: 80px"
+        class="px-4"
+        no-gutters
+      >
         <v-card>
           <v-fab-transition>
             <v-btn
@@ -34,6 +38,49 @@
           ></v-date-picker>
         </v-card>
       </v-row>
+      <!-- 
+      <v-subheader>Projects</v-subheader>
+      <div class="px-4">
+        <v-chip-group
+          v-model="selectedProjects"
+          multiple
+          active-class="green"
+          column
+        >
+          <v-chip
+            label
+            v-for="project in jobState.projects"
+            :key="project.reference"
+            dark
+            class="white--text"
+          >
+            {{ project.name }}
+          </v-chip>
+        </v-chip-group>
+      </div>
+
+      <v-subheader>Team Members</v-subheader>
+      <div class="px-4">
+        <v-chip-group multiple active-class="green darken-1" column>
+          <v-chip
+            label
+            v-for="person in jobState.people"
+            :key="person.reference"
+            filter
+          >
+            {{ person.firstName }} {{ person.lastName }}
+          </v-chip>
+        </v-chip-group>
+      </div>
+
+      <v-subheader>Tasks</v-subheader>
+      <div class="px-4">
+        <v-chip-group multiple active-class="green darken-1" column>
+          <v-chip label v-for="task in jobState.tasks" :key="task.reference">
+            {{ task.name }}
+          </v-chip>
+        </v-chip-group>
+      </div> -->
 
       <v-row class="px-4 pt-4" no-gutters>
         <v-select
@@ -49,7 +96,9 @@
             {{ item.name }}
           </template>
           <template v-slot:selection="{ item }">
-            {{ item.name }}
+            <span class="text-truncate" style="width: 160px">{{
+              item.name
+            }}</span>
           </template>
         </v-select>
       </v-row>
@@ -67,7 +116,9 @@
             {{ item.firstName }} {{ item.lastName }}
           </template>
           <template v-slot:selection="{ item }">
-            {{ item.firstName }} {{ item.lastName }}
+            <span class="text-truncate" style="width: 160px"
+              >{{ item.firstName }} {{ item.lastName }}</span
+            >
           </template>
         </v-select>
       </v-row>
@@ -133,15 +184,15 @@
           >{{ new Date(item.end).toLocaleDateString() }}
           {{ new Date(item.end).toLocaleTimeString() }}</span
         >
-        <v-chip outlined color="green" dark small v-if="!item.end"
-          >Active</v-chip
-        >
       </template>
 
       <template v-slot:item.duration="{ item }">
         <span v-if="item.duration">{{
           msToMinutesAndSeconds(item.duration)
         }}</span>
+        <v-chip outlined color="green" dark small v-if="!item.duration"
+          >Active</v-chip
+        >
       </template>
 
       <template v-slot:item.action="{ item }">
@@ -177,6 +228,8 @@ export default defineComponent({
     const selectedPerson = ref(null);
     const selectedProject = ref(null);
     const newTaskDialog = ref(false);
+
+    const selectedProjects = ref([]);
 
     const peopleHeaders = [
       {
@@ -387,6 +440,7 @@ export default defineComponent({
       dateRange,
       removeShift,
       msToMinutesAndSeconds,
+      selectedProjects,
     };
   },
 });
