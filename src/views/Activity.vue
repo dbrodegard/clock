@@ -10,22 +10,22 @@
         no-gutters
       >
         <v-card>
-          <v-fab-transition>
+          <v-scale-transition origin="center center">
             <v-btn
               v-show="dateRange.length > 0"
               color="red"
-              fab
               dark
               small
               absolute
               top
               right
               @click="dateRange = []"
-              style="margin-right: -27px"
+              style="margin-right: -27px; margin-top: -2px; z-index: 10"
+              fab
             >
               <v-icon>mdi-close</v-icon>
             </v-btn>
-          </v-fab-transition>
+          </v-scale-transition>
 
           <v-date-picker
             dark
@@ -38,6 +38,7 @@
           ></v-date-picker>
         </v-card>
       </v-row>
+
       <!-- 
       <v-subheader>Projects</v-subheader>
       <div class="px-4">
@@ -90,53 +91,91 @@
           label="Project"
           outlined
           dense
-          return-object
+          item-value="reference"
+          v-model="selectedProjects"
+          multiple
         >
           <template v-slot:item="{ item }">
             {{ item.name }}
           </template>
-          <template v-slot:selection="{ item }">
-            <span class="text-truncate" style="width: 160px">{{
-              item.name
-            }}</span>
-          </template>
-        </v-select>
-      </v-row>
-      <v-row class="px-4" no-gutters>
-        <v-select
-          return-object
-          clearable
-          :items="jobState.people"
-          dark
-          label="Team Member"
-          outlined
-          dense
-        >
-          <template v-slot:item="{ item }">
-            {{ item.firstName }} {{ item.lastName }}
-          </template>
-          <template v-slot:selection="{ item }">
-            <span class="text-truncate" style="width: 160px"
-              >{{ item.firstName }} {{ item.lastName }}</span
+          <template v-slot:selection="{ item, index }">
+            <span
+              v-if="selectedProjects && selectedProjects.length === 0"
+              class="text-truncate"
+              style="width: 160px"
+              >{{ item.name }}</span
+            >
+            <span
+              v-if="
+                selectedProjects && selectedProjects.length > 0 && index === 0
+              "
+              class="text-truncate"
+              style="width: 160px"
+              >{{ selectedProjects.length }} Selected</span
             >
           </template>
         </v-select>
       </v-row>
       <v-row class="px-4" no-gutters>
         <v-select
-          return-object
+          item-value="reference"
+          clearable
+          :items="jobState.people"
+          dark
+          label="Team Member"
+          outlined
+          dense
+          v-model="selectedPeople"
+          multiple
+        >
+          <template v-slot:item="{ item }">
+            {{ item.firstName }} {{ item.lastName }}
+          </template>
+          <template v-slot:selection="{ item, index }">
+            <span
+              v-if="selectedPeople && selectedPeople.length === 0"
+              class="text-truncate"
+              style="width: 160px"
+              >{{ item.firstName }} {{ item.lastName }}</span
+            >
+            <span
+              v-if="selectedPeople && selectedPeople.length > 0 && index === 0"
+              class="text-truncate"
+              style="width: 160px"
+              >{{ selectedPeople.length }} Selected</span
+            >
+          </template>
+        </v-select>
+      </v-row>
+      <v-row class="px-4" no-gutters>
+        <v-select
+          item-value="reference"
           clearable
           :items="jobState.tasks"
           dark
           label="Task"
           outlined
           dense
+          v-model="selectedTasks"
+          multiple
+          item-text="name"
         >
           <template v-slot:item="{ item }">
             {{ item.name }}
           </template>
-          <template v-slot:selection="{ item }">
-            {{ item.name }}
+          <template v-slot:selection="{ item, index }">
+            <span
+              v-if="selectedTasks && selectedTasks.length === 0"
+              class="text-truncate"
+              style="width: 160px"
+              >{{ item.name }}</span
+            >
+            <span
+              v-if="selectedTasks && selectedTasks.length > 0 && index === 0"
+              class="text-truncate"
+              style="width: 160px"
+              >{{ selectedTasks.length }} Selected</span
+            >
           </template>
         </v-select>
       </v-row>
@@ -152,7 +191,7 @@
       fixed-header
       height="calc(100vh - 128px)"
       :headers="shiftHeaders"
-      :items="jobState.shifts"
+      :items="filteredShifts"
     >
       <template v-slot:item.person="{ item }">
         <span v-if="jobState.personDict[item.person]">
@@ -208,72 +247,22 @@
 
 <script>
 // @ is an alias to /src
+import { state as jobState, msToMinutesAndSeconds } from "@/store.js";
 import {
-  addNewPerson,
-  state as jobState,
-  addNewProject,
-  addNewTask,
-  updateProject,
-  updateTask,
-  updateShift,
-  msToMinutesAndSeconds,
-} from "@/store.js";
-import { defineComponent, onMounted, ref } from "@vue/composition-api";
+  computed,
+  defineComponent,
+  onMounted,
+  ref,
+} from "@vue/composition-api";
 
 export default defineComponent({
   setup() {
     const dateRange = ref([]);
-    const newPersonDialog = ref(false);
-    const newProjectDialog = ref(false);
-    const selectedPerson = ref(null);
-    const selectedProject = ref(null);
-    const newTaskDialog = ref(false);
 
     const selectedProjects = ref([]);
+    const selectedPeople = ref([]);
+    const selectedTasks = ref([]);
 
-    const peopleHeaders = [
-      {
-        text: "Name",
-        align: "start",
-        sortable: true,
-        value: "lastName",
-      },
-      {
-        text: "Remove",
-        align: "center",
-        sortable: false,
-        value: "action",
-        width: 100,
-      },
-    ];
-
-    const projectHeaders = [
-      {
-        text: "Display Name",
-        align: "start",
-        sortable: true,
-        value: "name",
-      },
-      {
-        text: "Client",
-        align: "start",
-        sortable: true,
-        value: "client",
-      },
-      {
-        text: "Claim ID",
-        align: "start",
-        sortable: true,
-        value: "claimID",
-      },
-      {
-        text: "Remove",
-        align: "center",
-        sortable: false,
-        value: "action",
-        width: 100,
-      },
-    ];
     const shiftHeaders = [
       {
         text: "Person",
@@ -321,126 +310,88 @@ export default defineComponent({
       // },
     ];
 
-    const taskHeaders = [
-      {
-        text: "Name",
-        align: "start",
-        sortable: true,
-        value: "name",
-      },
-      {
-        text: "Remove",
-        align: "center",
-        sortable: false,
-        value: "action",
-        width: 100,
-      },
-    ];
+    const filteredShifts = computed(() => {
+      let arrayToReturn = jobState.shifts;
 
-    const newPerson = ref({
-      firstName: null,
-      lastName: null,
-      pid: null,
-      active: true,
+      if (
+        dateRange.value &&
+        dateRange.value.length &&
+        dateRange.value.length > 0
+      ) {
+        let start = new Date(
+          dateRange.value[0].split("-")[0],
+          dateRange.value[0].split("-")[1] - 1,
+          dateRange.value[0].split("-")[2]
+        );
+        let end = new Date(
+          dateRange.value[0].split("-")[0],
+          dateRange.value[0].split("-")[1] - 1,
+          dateRange.value[0].split("-")[2]
+        );
+
+        if (dateRange.value.length === 2) {
+          end = new Date(
+            dateRange.value[1].split("-")[0],
+            dateRange.value[1].split("-")[1] - 1,
+            dateRange.value[1].split("-")[2]
+          );
+        }
+
+        end.setHours(23, 59, 59, 999);
+
+        console.log("starting and ending", start.getTime());
+
+        arrayToReturn = arrayToReturn.filter(
+          (e) => e.start >= start.getTime() && e.start <= end.getTime()
+        );
+      }
+
+      if (
+        selectedProjects.value &&
+        selectedProjects.value.length &&
+        selectedProjects.value.length > 0
+      ) {
+        console.log("filtering shifts");
+        arrayToReturn = arrayToReturn.filter((e) =>
+          selectedProjects.value.includes(e.project)
+        );
+      }
+
+      if (
+        selectedPeople.value &&
+        selectedPeople.value.length &&
+        selectedPeople.value.length > 0
+      ) {
+        console.log("filtering shifts");
+        arrayToReturn = arrayToReturn.filter((e) =>
+          selectedPeople.value.includes(e.person)
+        );
+      }
+
+      if (
+        selectedTasks.value &&
+        selectedTasks.value.length &&
+        selectedTasks.value.length > 0
+      ) {
+        console.log("filtering shifts");
+        arrayToReturn = arrayToReturn.filter((e) =>
+          selectedTasks.value.includes(e.task)
+        );
+      }
+
+      return arrayToReturn;
     });
-
-    const newProject = ref({
-      displayName: null,
-      claimID: null,
-      client: null,
-      active: true,
-    });
-
-    const newTask = ref({
-      name: null,
-      active: true,
-    });
-
-    const resetNewTask = () => {
-      newTask.value = {
-        name: null,
-        active: true,
-      };
-    };
-
-    const resetNewProject = () => {
-      newPerson.value = {
-        displayName: null,
-        claimID: null,
-        client: null,
-        active: true,
-      };
-    };
-
-    const resetNewPerson = () => {
-      newPerson.value = {
-        firstName: null,
-        lastName: null,
-        pid: null,
-        active: true,
-      };
-    };
-
-    const submitNewProject = async () => {
-      await addNewProject(newProject.value);
-      resetNewProject();
-      newProjectDialog.value = false;
-    };
-
-    const submitNewTask = async () => {
-      await addNewTask(newTask.value);
-      resetNewTask();
-      newTaskDialog.value = false;
-    };
-
-    const submitNewPerson = async () => {
-      await addNewPerson(newPerson.value);
-      resetNewPerson();
-      newPersonDialog.value = false;
-    };
-
-    const removeShift = async (shift) => {
-      shift.hidden = true;
-      await updateShift(shift);
-    };
-
-    const removeProject = async (project) => {
-      project.active = false;
-      await updateProject(project);
-    };
-
-    const removeTask = async (task) => {
-      task.active = false;
-      await updateTask(task);
-    };
 
     onMounted(() => {});
     return {
-      jobState,
-      selectedPerson,
-      selectedProject,
-      peopleHeaders,
-      projectHeaders,
-      shiftHeaders,
-      newPerson,
-      newPersonDialog,
-      resetNewPerson,
-      submitNewPerson,
-      taskHeaders,
-      newProjectDialog,
-      newProject,
-      resetNewProject,
-      submitNewProject,
-      submitNewTask,
-      resetNewTask,
-      newTask,
-      removeProject,
-      removeTask,
-      newTaskDialog,
       dateRange,
-      removeShift,
       msToMinutesAndSeconds,
       selectedProjects,
+      shiftHeaders,
+      jobState,
+      filteredShifts,
+      selectedTasks,
+      selectedPeople,
     };
   },
 });
