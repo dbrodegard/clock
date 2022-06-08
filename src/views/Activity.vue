@@ -184,7 +184,10 @@
       <h1 style="font-size: 22px; font-weight: 900">Work</h1>
 
       <v-spacer />
-      <v-btn dark depressed color="green darken-1">Export </v-btn>
+
+      <v-btn @click="generateXLSX()" dark depressed color="green darken-3"
+        ><v-icon left>mdi-microsoft-excel</v-icon>Export
+      </v-btn>
     </v-app-bar>
     <v-data-table
       :items-per-page="100"
@@ -247,7 +250,12 @@
 
 <script>
 // @ is an alias to /src
-import { state as jobState, msToMinutesAndSeconds } from "@/store.js";
+import {
+  state as jobState,
+  msToMinutesAndSeconds,
+  writeToCSV,
+  createActivitySpreadsheet,
+} from "@/store.js";
 import {
   computed,
   defineComponent,
@@ -277,6 +285,12 @@ export default defineComponent({
         value: "project",
       },
       {
+        text: "Task",
+        align: "start",
+        sortable: true,
+        value: "task",
+      },
+      {
         text: "Start",
         align: "start",
         sortable: true,
@@ -295,12 +309,7 @@ export default defineComponent({
         sortable: true,
         value: "duration",
       },
-      {
-        text: "Task",
-        align: "start",
-        sortable: true,
-        value: "task",
-      },
+
       // {
       //   text: "Remove",
       //   align: "center",
@@ -382,6 +391,14 @@ export default defineComponent({
       return arrayToReturn;
     });
 
+    const generateCSV = () => {
+      writeToCSV(filteredShifts.value);
+    };
+
+    const generateXLSX = () => {
+      createActivitySpreadsheet(filteredShifts.value);
+    };
+
     onMounted(() => {});
     return {
       dateRange,
@@ -392,6 +409,8 @@ export default defineComponent({
       filteredShifts,
       selectedTasks,
       selectedPeople,
+      generateCSV,
+      generateXLSX,
     };
   },
 });

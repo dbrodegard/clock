@@ -67,7 +67,7 @@ export default defineComponent({
     if (navigator.serviceWorker) {
       // Prevent multiple refreshes
       navigator.serviceWorker.addEventListener("controllerchange", () => {
-        console.log("controller change");
+        console.log("controller change, latest update");
         if (refreshing.value) return;
         refreshing.value = true;
         // Here the actual reload of the page occurs

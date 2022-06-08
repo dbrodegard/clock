@@ -14,7 +14,112 @@ import {
 import { getFirestore } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
 import { reactive } from "@vue/composition-api";
+import * as XLSX from "xlsx";
+
 Vue.use(VueCompositionAPI);
+
+export const writeToCSV = (shifts) => {
+  console.log("should be adding shifts", shifts);
+
+  const createCsvWriter = require("csv-writer").createObjectCsvWriter;
+  const csvWriter = createCsvWriter({
+    path: "path/to/file.csv",
+    header: [
+      { id: "name", title: "NAME" },
+      { id: "lang", title: "LANGUAGE" },
+    ],
+  });
+
+  const records = [
+    { name: "Bob", lang: "French, English" },
+    { name: "Mary", lang: "English" },
+  ];
+
+  csvWriter
+    .writeRecords(records) // returns a promise
+    .then(() => {
+      console.log("...Done");
+    });
+};
+
+export function createActivitySpreadsheet(cleanArray) {
+  let arrayForExport = [];
+
+  cleanArray.forEach((shift) => {
+    let objectForReturn = {};
+    let person = shift.person;
+
+    if (state.fullPeopleDict[shift.person]) {
+      person =
+        state.fullPeopleDict[shift.person].firstName +
+        " " +
+        state.fullPeopleDict[shift.person].lastName;
+    }
+
+    objectForReturn.person = person;
+
+    let project = shift.project;
+
+    if (state.fullProjectsDict[shift.project]) {
+      project = state.fullProjectsDict[shift.project].name;
+    }
+
+    objectForReturn.project = project;
+
+    let task = shift.task;
+
+    if (state.fullTasksDict[shift.task]) {
+      task = state.fullTasksDict[shift.task].name;
+    }
+
+    objectForReturn.task = task;
+
+    objectForReturn.start =
+      new Date(shift.start).toLocaleDateString() +
+      " " +
+      new Date(shift.start).toLocaleTimeString();
+
+    objectForReturn.end = "";
+
+    if (shift.end) {
+      objectForReturn.end =
+        new Date(shift.end).toLocaleDateString() +
+        " " +
+        new Date(shift.end).toLocaleTimeString();
+    }
+
+    objectForReturn.duration = "";
+
+    if (shift.duration) {
+      objectForReturn.duration = msToMinutesAndSeconds(shift.duration);
+    }
+
+    arrayForExport.push(objectForReturn);
+  });
+
+  let goOn = true;
+
+  if (goOn) {
+    const worksheet = XLSX.utils.json_to_sheet(arrayForExport);
+
+    XLSX.utils.sheet_add_aoa(
+      worksheet,
+      [["Person", "Project", "Task", "Start", "End", "Duration"]],
+      { origin: "A1" }
+    );
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Shift Report");
+
+    let dateExported = new Date().toLocaleDateString();
+    let timeExported = new Date().toLocaleTimeString();
+
+    XLSX.writeFile(
+      workbook,
+      "Shift Report " + dateExported + " " + timeExported + ".xlsb"
+    );
+  }
+}
 
 export const state = reactive({
   people: [],
