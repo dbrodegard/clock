@@ -164,21 +164,23 @@ export const getOpenTasks = async (personReference) => {
   state.selectedPersonOpenTasks = [];
   const shiftsRef = collection(state.db, "shifts");
 
-  const q = query(
-    shiftsRef,
-    where("open", "==", true),
-    where("person", "==", personReference)
-  );
+  const q = query(shiftsRef, where("open", "==", true));
   const querySnapshot = await getDocs(q);
+
+  let localShifts = {};
   querySnapshot.forEach((doc) => {
-    let task = doc.data();
-    task.reference = doc.id;
-    state.selectedPersonOpenTasks.push(task);
+    let shift = doc.data();
+    shift.reference = doc.id;
+    if (shift.open) {
+      localShifts[shift.person] = shift;
+    }
+    state.shifts.push(shift);
   });
+
+  state.openShiftsByPerson = localShifts;
 };
 
 export const updateShift = async (shift) => {
-  console.log("updating shift", shift);
   await setDoc(doc(state.db, "shifts", shift.reference), shift);
 };
 
@@ -207,7 +209,26 @@ export function msToMinutesAndSeconds(ms) {
   return hours + ":" + minutes + ":" + seconds;
 }
 
-export const initialize = () => {
+let shiftWatcher;
+
+export const watchShifts = () => {
+  console.log("watching the shifts");
+  const c = query(collection(state.db, "shifts"), orderBy("start", "desc"));
+  shiftWatcher = onSnapshot(c, (querySnapshot) => {
+    state.shifts = [];
+    querySnapshot.forEach((doc) => {
+      let shift = doc.data();
+      shift.reference = doc.id;
+      state.shifts.push(shift);
+    });
+  });
+};
+
+export const unwatchShifts = () => {
+  shiftWatcher();
+};
+
+export const initialize = async () => {
   let rememberedEmployee = localStorage.getItem("selectedPersonReference");
   const firebaseConfig = {
     apiKey: "AIzaSyDTiJAB4djq-6cSu8Zkrmt2uvhpTNwVoMc",
@@ -241,6 +262,10 @@ export const initialize = () => {
         state.people.push(person);
       }
     });
+
+    state.people.sort(function (a, b) {
+      return a.lastName.localeCompare(b.lastName);
+    });
   });
 
   const a = query(collection(state.db, "projects"));
@@ -256,6 +281,10 @@ export const initialize = () => {
         state.projectsDict[project.reference] = project;
         state.projects.push(project);
       }
+    });
+
+    state.projects.sort(function (a, b) {
+      return a.name.localeCompare(b.name);
     });
   });
 
@@ -273,23 +302,28 @@ export const initialize = () => {
         state.tasks.push(task);
       }
     });
-  });
 
-  const c = query(collection(state.db, "shifts"), orderBy("start", "desc"));
-  onSnapshot(c, (querySnapshot) => {
-    state.shifts = [];
-    let localShifts = {};
-    querySnapshot.forEach((doc) => {
-      let shift = doc.data();
-      shift.reference = doc.id;
-      if (shift.open) {
-        localShifts[shift.person] = shift;
-      }
-      state.shifts.push(shift);
+    state.tasks.sort(function (a, b) {
+      return a.name.localeCompare(b.name);
     });
-
-    state.openShiftsByPerson = localShifts;
   });
+
+  const shiftsRef = collection(state.db, "shifts");
+
+  const m = query(shiftsRef, where("open", "==", true));
+  const querySnapshot = await getDocs(m);
+
+  let localShifts = {};
+  querySnapshot.forEach((doc) => {
+    let shift = doc.data();
+    shift.reference = doc.id;
+    if (shift.open) {
+      localShifts[shift.person] = shift;
+    }
+    state.shifts.push(shift);
+  });
+
+  state.openShiftsByPerson = localShifts;
 
   return true;
 };

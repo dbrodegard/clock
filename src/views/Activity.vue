@@ -195,6 +195,8 @@
       height="calc(100vh - 128px)"
       :headers="shiftHeaders"
       :items="filteredShifts"
+      @click:row="editShift"
+      class="row-pointer"
     >
       <template v-slot:item.person="{ item }">
         <span v-if="jobState.personDict[item.person]">
@@ -232,19 +234,15 @@
         <span v-if="item.duration">{{
           msToMinutesAndSeconds(item.duration)
         }}</span>
-        <v-chip outlined color="green" dark small v-if="!item.duration"
-          >Active</v-chip
-        >
       </template>
 
       <template v-slot:item.action="{ item }">
-        <v-row no-gutters justify="center">
-          <v-btn @click="removeShift(item)" icon
-            ><v-icon>mdi-close</v-icon></v-btn
-          >
-        </v-row>
+        <v-btn @click="editShift(item)" icon
+          ><v-icon small>mdi-application-edit-outline</v-icon></v-btn
+        >
       </template>
     </v-data-table>
+    <shift-editor ref="editor" :selectedShift="selectedShift" />
   </v-container>
 </template>
 
@@ -255,21 +253,40 @@ import {
   msToMinutesAndSeconds,
   writeToCSV,
   createActivitySpreadsheet,
+  watchShifts,
+  unwatchShifts,
 } from "@/store.js";
 import {
+  onBeforeMount,
+  onBeforeUnmount,
   computed,
   defineComponent,
   onMounted,
   ref,
 } from "@vue/composition-api";
+import ShiftEditor from "../components/ShiftEditor.vue";
 
 export default defineComponent({
+  components: { ShiftEditor },
   setup() {
     const dateRange = ref([]);
-
+    const editor = ref();
     const selectedProjects = ref([]);
     const selectedPeople = ref([]);
     const selectedTasks = ref([]);
+
+    const selectedShift = ref(null);
+
+    const dialog = ref(false);
+
+    onBeforeMount(() => {
+      console.log("activity is mounting");
+      watchShifts();
+    });
+
+    onBeforeUnmount(() => {
+      unwatchShifts();
+    });
 
     const shiftHeaders = [
       {
@@ -399,6 +416,11 @@ export default defineComponent({
       createActivitySpreadsheet(filteredShifts.value);
     };
 
+    const editShift = (shift) => {
+      selectedShift.value = JSON.parse(JSON.stringify(shift));
+      editor.value.internalDialog = true;
+    };
+
     onMounted(() => {});
     return {
       dateRange,
@@ -411,7 +433,17 @@ export default defineComponent({
       selectedPeople,
       generateCSV,
       generateXLSX,
+      editShift,
+      selectedShift,
+      dialog,
+      editor,
     };
   },
 });
 </script>
+
+<style lang="css" scoped>
+.row-pointer >>> tbody tr :hover {
+  cursor: pointer;
+}
+</style>
